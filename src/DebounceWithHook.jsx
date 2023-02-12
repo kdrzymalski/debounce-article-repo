@@ -1,17 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
+import { useDebounce } from './hooks/useDebounce.ts';
 
-function debounce(callback, delay = 300) {
-  let timeout;
-
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  };
-}
-
-const ComponentWithOwnDebounce = () => {
+const ComponentWithHookDebounce = () => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
@@ -23,27 +13,19 @@ const ComponentWithOwnDebounce = () => {
     setSuggestions(filteredSuggestions);
   };
 
-  const ref = useRef(fetchSuggestions);
+  const debouncedCallback = useDebounce(async () => {
+    await fetchSuggestions();
+  }, 400);
 
-  useEffect(() => {
-    ref.current = fetchSuggestions;
-  }, [inputValue]);
-
-  const debouncedCallback = useMemo(() => {
-    const latestFetchSuggestionsFunction = () => {
-      ref.current?.();
-    };
-    return debounce(latestFetchSuggestionsFunction, 400);
-  }, []);
-
-  const handleInputChange = async (event) => {
+  const handleInputChange = (event) => {
     setInputValue(event.target.value);
+
     debouncedCallback();
   };
 
   return (
     <>
-      <h2>Own Debounce Example</h2>
+      <h2>Hook Debounce Example</h2>
       <input onChange={handleInputChange} />
       <br />
       {inputValue.length !== 0 && suggestions.length === 0 && <>No Matches</>}
@@ -53,4 +35,4 @@ const ComponentWithOwnDebounce = () => {
   );
 };
 
-export default ComponentWithOwnDebounce;
+export default ComponentWithHookDebounce;
